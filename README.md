@@ -41,7 +41,9 @@ To verify that everything is working:
 You can configure various parameters in `dynamic_map.py`:
 - Change the resolution of the map by modifying `self.resolution`.
 - Adjust the map height and width using `self.map_height` and `self.map_width`.
+- Offset the map in the X-axis of the robot by changing `self.map_height_offset`.
 - Offset the map in the Y-axis of the robot by changing `self.map_width_offset`.
+- If there is a Yaw offset between base_link and laser, then add that to `self.baselink_to_laser_yaw_offset`.
 - Change the update rate with `self.update_rate`.
 - Set the expansion size of the costmap using `self.expansion_size`.
 

@@ -10,21 +10,39 @@ class DynamicMapUpdater(Node):
 
     def __init__(self):
         super().__init__('dynamic_map_updater') 
-        self.resolution = 0.05  ## Example resolution (meters per cell)
-        self.map_height = 100  ## Example map height (cells) (100*0.05 = 5m)
-        self.map_width = 50  ## Example map width (cells) (50*0.05 = 2.5m)
-        self.map_width_offset = 10  ## Example map width offset with respect to robot (cells) (10*0.05 = 0.5m)
-        self.origin_x = 0.0 #- 0.263  ## Example map origin x (meters) "Distance between laser and base_link frame" # 0.263 is subtracted due to laser is mounted 0.263m in X with respect to base link. 
-        self.origin_y = 0.0 - ((self.map_width_offset) * self.resolution) ## Example map origin y (meters)
-        self.local_map = np.zeros((self.map_width, self.map_height), dtype=np.int8) ## Initialize empty local map array
-        self.update_rate = 15  ## Update rate in Hz
+        ## Resolution (meters per cell)
+        self.resolution = 0.05  
+        ## Map height (cells) (100*0.05 = 5m)
+        self.map_height = 100  
+        ## Map width (cells) (50*0.05 = 2.5m)
+        self.map_width = 50  
+        ## Map width offset with respect to robot (cells) (10*0.05 = 0.5m); Moves the Map Origin left-right
+            # +ve mean towards left and -ve means towards right
+        self.map_width_offset = 10  
+        ## Map height offset with respect to robot (cells) (20*0.05 = 1.0m); Moves the Map Origin forward-backword
+            # +ve mean forward and -ve means backword
+        self.map_height_offset = -20  
+        ##  Map origin x in (meters) after height offset and link offset. "Distance between lidar_miunt_link and base_link frame" # laser is mounted -0.13 m in X with respect to base link. substaract the value with sign.
+        self.origin_x = 0.0 + ((self.map_height_offset) * self.resolution) # - (-0.13) for real robot
+        ## Map origin y (meters) after width offset; Here no offset between the links in Y direction. 
+        self.origin_y = 0.0 - ((self.map_width_offset) * self.resolution) 
+        ## yaw offset between base_link to lidar_mount_link = 45° = 0.785  ## counter clock wise +ve ; clock wise -ve.
+        self.baselink_to_laser_yaw_offset = 0.0   # 0.785 for real robot 
+        ## Initialize empty local map array
+        self.local_map = np.zeros((self.map_width, self.map_height), dtype=np.int8) 
+        ## Update rate in Hz
+        self.update_rate = 10  
+        ## Expansion size to create costmap 
+        self.expansion_size = 7  
+
         self.odom_data = None
         self.scan_data = None
-        self.expansion_size = 6  ## Example expansion size to create costmap 
-
-        self.odom_sub = self.create_subscription(Odometry,'/odom',self.odom_callback,1)
+        
+        ## Subscribers
+        self.odom_sub = self.create_subscription(Odometry,'/odometry/global',self.odom_callback,1)
         self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,qos_profile=qos_profile_sensor_data)
 
+        ## Publishers
         self.publisher = self.create_publisher(OccupancyGrid,'/local_map',1)
         self.costmap_pub = self.create_publisher(OccupancyGrid,'/costmap',1)
 
@@ -32,7 +50,7 @@ class DynamicMapUpdater(Node):
 
     def scan_callback(self, msg):
         ## Calculate the angles corresponding to each scan reading
-        angles = np.arange(msg.angle_min, msg.angle_max , msg.angle_increment)
+        angles = np.arange(msg.angle_min, msg.angle_max , msg.angle_increment)  + self.baselink_to_laser_yaw_offset  # yaw offset is added to ancounter any yaw difference between the robot heading and laser heading. 
         ## Get the distance readings from the laser scanner
         ranges = np.array(msg.ranges)
         ## Calculate the x and y coordinates in the map frame
@@ -99,8 +117,8 @@ class DynamicMapUpdater(Node):
         costmap_msg.info.resolution = resolution
         costmap_msg.info.width = width
         costmap_msg.info.height = height
-        costmap_msg.info.origin.position.x = self.odom_data.pose.pose.position.x + (((self.map_width_offset) * self.resolution)*np.sin(yaw))
-        costmap_msg.info.origin.position.y = self.odom_data.pose.pose.position.y - (((self.map_width_offset) * self.resolution)*np.cos(yaw))
+        costmap_msg.info.origin.position.x = self.odom_data.pose.pose.position.x + (((self.map_width_offset) * self.resolution)*np.sin(yaw)) + (((self.map_height_offset) * self.resolution) * np.cos(yaw))
+        costmap_msg.info.origin.position.y = self.odom_data.pose.pose.position.y - (((self.map_width_offset) * self.resolution)*np.cos(yaw)) + (((self.map_height_offset) * self.resolution) * np.sin(yaw))
         costmap_msg.info.origin.position.z = self.odom_data.pose.pose.position.z
         costmap_msg.info.origin.orientation.x = self.odom_data.pose.pose.orientation.x
         costmap_msg.info.origin.orientation.y = self.odom_data.pose.pose.orientation.y
@@ -124,8 +142,8 @@ class DynamicMapUpdater(Node):
         msg.info.resolution = self.resolution
         msg.info.width = self.map_height
         msg.info.height = self.map_width
-        msg.info.origin.position.x = self.odom_data.pose.pose.position.x + (((self.map_width_offset) * self.resolution)*np.sin(yaw))
-        msg.info.origin.position.y = self.odom_data.pose.pose.position.y - (((self.map_width_offset) * self.resolution)*np.cos(yaw))
+        msg.info.origin.position.x = self.odom_data.pose.pose.position.x + (((self.map_width_offset) * self.resolution)*np.sin(yaw)) + (((self.map_height_offset) * self.resolution) * np.cos(yaw))
+        msg.info.origin.position.y = self.odom_data.pose.pose.position.y - (((self.map_width_offset) * self.resolution)*np.cos(yaw)) + (((self.map_height_offset) * self.resolution) * np.sin(yaw))
         msg.info.origin.position.z = self.odom_data.pose.pose.position.z
         msg.info.origin.orientation.x = self.odom_data.pose.pose.orientation.x
         msg.info.origin.orientation.y = self.odom_data.pose.pose.orientation.y
