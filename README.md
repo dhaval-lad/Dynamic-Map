@@ -1,5 +1,7 @@
 # dynamic_map
 
+![dynamic_map_gif](resource/dynamic_map.gif)
+
 ## Description
 The `dynamic_map` package is responsible for using laser scan data and the robot's odometry to create a dynamic local map and costmap around the robot. The maps move with the robot and are updated simultaneously.
 
