@@ -6,8 +6,9 @@
 The `dynamic_map` package is responsible for using laser scan data and the robot's odometry to create a dynamic local map and costmap around the robot. The maps move with the robot and are updated simultaneously.
 
 ## Dependencies
-- ROS 2
-- A robot with a 2D LiDAR sensor
+- [Ubuntu 22.04](https://releases.ubuntu.com/22.04/)
+- [ROS2-Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+- A robot with a 2D LiDAR sensor and odometry information. Recomended: [GrassHopper Gazebo](https://github.com/dhaval-lad/grasshopper_gazebo.git)
 
 ## Installation Instructions
 1. First, clone this repository inside the `src` folder of your ROS 2 workspace (replace `ros2_ws` with the name of your ROS 2 workspace):
