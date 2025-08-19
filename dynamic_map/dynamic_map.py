@@ -31,7 +31,7 @@ class DynamicMapUpdater(Node):
         ## Initialize empty local map array
         self.local_map = np.zeros((self.map_width, self.map_height), dtype=np.int8) 
         ## Update rate in Hz
-        self.update_rate = 10  
+        self.update_rate = 30  
         ## Expansion size to create costmap 
         self.expansion_size = 7  
 
@@ -39,8 +39,8 @@ class DynamicMapUpdater(Node):
         self.scan_data = None
         
         ## Subscribers
-        self.odom_sub = self.create_subscription(Odometry,'/odometry/global',self.odom_callback,1)
-        self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,qos_profile=qos_profile_sensor_data)
+        self.odom_sub = self.create_subscription(Odometry,'/odom',self.odom_callback,1)
+        self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,qos_profile=1)
 
         ## Publishers
         self.publisher = self.create_publisher(OccupancyGrid,'/local_map',1)
